@@ -113,6 +113,9 @@ module.exports = function(app, config) {
         }
         return;
       }
+      if (body.deleted) {
+        callback();
+      }
       if (validateOAuth(body.oauth)) {
         return callback(null, denormalizeOAuth(body));
       } else {
@@ -127,6 +130,10 @@ module.exports = function(app, config) {
       userKey = 'org.couchdb.user:' + userKey;
     }
     users.get(userKey, {}, function(err, body) {
+      if (body.deleted) {
+        callback(true);
+        return;
+      }
       if (err) {
         callback(err);
         return;

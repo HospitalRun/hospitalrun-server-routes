@@ -1,6 +1,6 @@
 {
   "name": "hospitalrun-server-routes",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Express server routes for HospitalRun",
   "main": "index.js",
   "scripts": {
