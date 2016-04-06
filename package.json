@@ -4,7 +4,9 @@
   "description": "Express server routes for HospitalRun",
   "main": "index.js",
   "scripts": {
-    "test": "jscs *.js routes/*.js"
+    "test": "snyk test && jscs *.js routes/*.js",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -30,7 +32,9 @@
     "on-headers": "^1.0.1",
     "passport": "^0.3.2",
     "passport-google-oauth": "^1.0.0",
-    "request": "^2.69.0",
-    "serializer": "0.0.3"
-  }
+    "request": "^2.70.0",
+    "serializer": "0.0.3",
+    "snyk": "^1.13.2"
+  },
+  "snyk": true
 }
