@@ -106,15 +106,16 @@ module.exports = function(app, config) {
     var userKey = 'org.couchdb.user:' + profile.emails[0].value;
     users.get(userKey, {}, function(err, body) {
       if (err) {
-        if (err.status_code === 404) {
-          callback();
+        if (err.error && err.error === 'not_found') {
+          callback(null, false);
         } else {
           callback(err);
         }
         return;
       }
       if (body.deleted) {
-        callback();
+        callback(null, false);
+        return;
       }
       if (validateOAuth(body.oauth)) {
         return callback(null, denormalizeOAuth(body));
