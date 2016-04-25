@@ -177,10 +177,10 @@ module.exports = function(app, config) {
   //   login page.  Otherwise, the primary route function function will be called,
   //   which, in this example, will redirect the user to the home page.
   router.get('/auth/google/callback',
-    passport.authenticate('google', { failureRedirect: '/#/login' }),
+    passport.authenticate('google', { failureRedirect: '/login' }),
     function(req, res) {
       var user = req.user;
-      var redirURL = '/#/finishgauth/';
+      var redirURL = '/finishgauth/';
       redirURL += user.consumer_secret;
       redirURL += '/' + user.token_secret;
       redirURL += '/' + user.consumer_key;
