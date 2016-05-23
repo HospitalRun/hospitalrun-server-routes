@@ -131,12 +131,12 @@ module.exports = function(app, config) {
       userKey = 'org.couchdb.user:' + userKey;
     }
     users.get(userKey, {}, function(err, body) {
-      if (body.deleted) {
-        callback(true);
-        return;
-      }
       if (err) {
         callback(err);
+        return;
+      }
+      if (body && body.deleted) {
+        callback(true);
         return;
       }
       callback(null, body);
