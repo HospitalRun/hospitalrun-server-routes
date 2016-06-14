@@ -10,13 +10,24 @@ function _createMapFunction(type, query) {
       'if (doc._id && (uidx = doc._id.indexOf("_")) > 0) {' +
           'doctype = doc._id.substring(0, uidx);' +
           'if(doctype === "' + type + '") {';
+  var printedQueryValue = false;
   query.forEach(function(query) {
     var queryParts = query.split(':');
     if (queryParts.length === 2) {
       var key = queryParts[0];
       var value = queryParts[1];
-      mapFunction += 'queryValue = "' + value.toLowerCase() + '";';
-      mapFunction += 'if (doc.data["' + key + '"] && doc.data["' + key + '"].toLowerCase().indexOf(queryValue) >= 0) {' +
+      var lastChar = (value.length - 1);
+      if (!printedQueryValue) {
+        // Remove fuzzy and wildcard for slow search
+        if (value.substr(lastChar) === '~') {
+          value = value.substr(0, lastChar);
+        } else if (value.substr(0,1) === '*' && value.substr(lastChar) === '*') {
+          value = value.substr(1, (lastChar - 1));
+        }
+        mapFunction += 'queryValue = "' + value.toLowerCase() + '";';
+        printedQueryValue = true;
+      }
+      mapFunction += 'if (doc.' + key + ' && doc.' + key + '.toLowerCase().indexOf(queryValue) >= 0) {' +
           'found_doc = true;' +
       '}';
     }
@@ -39,7 +50,7 @@ function slowSearch(pattern, dburl) {
     var query = decodeURIComponent(req.url.match(pattern)[2]);
     var queryParts = query.split('+OR+');
     var requestOptions = {
-      body: _createMapFunction(model,  queryParts),
+      body: _createMapFunction(model, queryParts),
       json: true,
       url: searchUrl,
       headers: {
@@ -55,6 +66,6 @@ module.exports = function(app, config) {
   if (config.searchURL) {
     app.use(searchPath, forward(config.searchURL, config));
   } else {
-    app.use(searchPath, slowSearch(/\/hrdb\/(.*)\/_search\?q=(.*)/, config.couchDbURL));
+    app.use(searchPath, slowSearch(/\/hrdb\/(.*)\/_search\?q=(.*)/, config.couchAuthDbURL));
   }
 };
