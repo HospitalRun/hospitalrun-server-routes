@@ -1,5 +1,12 @@
 patch:
   'npm:request:20160119':
-    - 'nano > follow > request':
+    - nano > follow > request:
         patched: '2016-04-06T13:45:58.404Z'
-version: v1
+  'npm:hawk:20160119':
+    - nano > follow > request > hawk:
+        patched: '2016-09-07T19:31:48.961Z'
+  'npm:minimatch:20160620':
+    - snyk > recursive-readdir > minimatch:
+        patched: '2016-09-07T19:31:48.961Z'
+version: v1.5.2
+ignore: {}
