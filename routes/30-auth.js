@@ -118,7 +118,7 @@ module.exports = function(app, config) {
         return;
       }
       if (validateOAuth(body.oauth)) {
-        return callback(null, denormalizeOAuth(body));
+        callback(null, denormalizeOAuth(body));
       } else {
         createOAuthTokens(accessToken, body, callback);
       }
