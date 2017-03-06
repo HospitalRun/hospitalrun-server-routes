@@ -4,6 +4,7 @@ var express = require('express');
 var expressSession = require('express-session');
 var passport = require('passport');
 var serializer = require('serializer');
+var request = require('request');
 
 function createSecret(secretBase) {
   var encryptKey = serializer.randomString(48);
@@ -193,25 +194,43 @@ module.exports = function(app, config) {
   );
 
   router.post('/chkuser', function(req, res) {
-    if (req.isAuthenticated()) {
-      res.json({
-        displayName: req.user.displayName,
-        prefix: req.user.userPrefix,
-        role: getPrimaryRole(req.user),
-      });
-    } else {
-      findUser(req.body.name, function(err, user) {
-        if (err) {
-          res.json({error: true, errorResult: err});
-        } else {
-          res.json({
-            displayName: user.displayName,
-            prefix: user.userPrefix,
-            role: getPrimaryRole(user),
-          });
-        }
-      });
+    var requestOptions = {
+      url: config.couchDbURL +'/_session'
+    };
+    if (config.useGoogleAuth) {
+      if (req.get('x-oauth-consumer-key')) {
+        requestOptions.oauth = {
+          consumer_key: req.get('x-oauth-consumer-key'),
+          consumer_secret: req.get('x-oauth-consumer-secret'),
+          token: req.get('x-oauth-token'),
+          token_secret: req.get('x-oauth-token-secret')
+        };
+      }
     }
+    req.pipe(request.get(requestOptions, function (error, response, body) {
+      if (error) {
+        res.json({error: true, errorResult: error});
+      } else {
+        var userSession = JSON.parse(body);
+        if (userSession.userCtx.name === req.body.name) {
+          // User names match; we should respond with requested info
+          findUser(userSession.userCtx.name, function(err, user) {
+            if (err) {
+              res.json({error: true, errorResult: err});
+            } else {
+              res.json({
+                displayName: user.displayName,
+                prefix: user.userPrefix,
+                role: getPrimaryRole(user)
+              });
+            }
+          });
+        } else {
+          // User names don't match, throw error!
+          res.json({error: true, errorResult: 'You are not authorized'});
+        }
+      }
+    }));
   });
 
   router.get('/logout', function(req, res) {
