@@ -1,5 +1,6 @@
 var forward = require('../forward.js');
 var request = require('request');
+var url = require('url');
 
 function _createMapFunction(type, query) {
   var mapFunction = 'function(doc) {' +
@@ -46,9 +47,14 @@ function _createMapFunction(type, query) {
 function slowSearch(pattern, dburl) {
   return function(req, res) {
     var model = req.url.match(pattern)[1];
+    var parsedURL = url.parse(req.url, true);
     var searchUrl = dburl + '/main/_temp_view/?include_docs=true';
-    var query = decodeURIComponent(req.url.match(pattern)[2]);
-    var queryParts = query.split('+OR+');
+    var query = parsedURL.query.q;
+    var queryParts = query.split(' OR ');
+    var size =  parsedURL.query.size;
+    if (size) {
+      searchUrl += '&limit='+size;
+    }
     var requestOptions = {
       body: _createMapFunction(model, queryParts),
       json: true,
