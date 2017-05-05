@@ -73,6 +73,7 @@ passport.deserializeUser(function(obj, done) {
 });
 
 module.exports = function(app, config) {
+  /*eslint new-cap: ["error", { "capIsNewExceptions": ["Router"] }]*/
   var router = express.Router();
   var nano = require('nano')(config.couchAuthDbURL);
   var users = nano.use('_users');
@@ -80,7 +81,7 @@ module.exports = function(app, config) {
   router.use(bodyParser.urlencoded({
     extended: true
   }));
-  router.use(expressSession({ secret: 'health matters', resave: true, saveUninitialized: false }));
+  router.use(expressSession({secret: 'health matters', resave: true, saveUninitialized: false}));
 
 
   function createOAuthTokens(secretBase, user, callback) {
@@ -94,8 +95,6 @@ module.exports = function(app, config) {
     user.oauth.tokens[tokenKey] = createSecret(secretBase);
     users.insert(user, user._id, function(err, response) {
       if (err || !response.ok) {
-        console.log('ERROR Updating user with credentials:');
-        console.dir(response);
         callback(response);
       } else {
         callback(null, denormalizeOAuth(user));
@@ -140,7 +139,47 @@ module.exports = function(app, config) {
         callback(true);
         return;
       }
-      callback(null, body);
+      if (validateOAuth(body.oauth)) {
+        callback(null, denormalizeOAuth(body));
+      } else {
+        createOAuthTokens(serializer.randomString(48), body, callback);
+      }
+    });
+  }
+
+  function getSession(req, res, requestOptions, includeOauth) {
+    requestOptions.url = config.couchDbURL +'/_session';
+    request(requestOptions, function (error, response, body) {
+      if (error) {
+        res.json({error: true, errorResult: error});
+      } else {
+        var userSession = JSON.parse(body);
+        var userDetails = userSession.userCtx || userSession;
+        if (userDetails.name === req.body.name) {
+          // User names match; we should respond with requested info
+          findUser(userDetails.name, function(err, user) {
+            if (err) {
+              res.json({error: true, errorResult: err});
+            } else {
+              var response = {
+                displayName: user.displayName,
+                prefix: user.userPrefix,
+                role: getPrimaryRole(user)
+              };
+              if (includeOauth) {
+                response.k =  user.consumer_key;
+                response.s1 = user.consumer_secret;
+                response.t = user.token_key;
+                response.s2 = user.token_secret;
+              }
+              res.json(response);
+            }
+          });
+        } else {
+          // User names don't match, throw error!
+          res.json({error: true, errorResult: 'You are not authorized'});
+        }
+      }
     });
   }
 
@@ -166,8 +205,8 @@ module.exports = function(app, config) {
   //   redirecting the user to google.com.  After authorization, Google
   //   will redirect the user back to this application at /auth/google/callback
   router.get('/auth/google',
-    passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/userinfo.profile',
-                                              'https://www.googleapis.com/auth/userinfo.email',], }),
+    passport.authenticate('google', {scope: ['https://www.googleapis.com/auth/userinfo.profile',
+                                              'https://www.googleapis.com/auth/userinfo.email',],}),
     function() {
       // The request will be redirected to Google for authentication, so this
       // function will not be called.
@@ -179,7 +218,7 @@ module.exports = function(app, config) {
   //   login page.  Otherwise, the primary route function function will be called,
   //   which, in this example, will redirect the user to the home page.
   router.get('/auth/google/callback',
-    passport.authenticate('google', { failureRedirect: '/#/login' }),
+    passport.authenticate('google', {failureRedirect: '/#/login'}),
     function(req, res) {
       var user = req.user;
       var redirURL = '/#/finishgauth/';
@@ -193,44 +232,25 @@ module.exports = function(app, config) {
     }
   );
 
-  router.post('/chkuser', function(req, res) {
+  router.post('/auth/login', function(req, res) {
     var requestOptions = {
-      url: config.couchDbURL +'/_session'
+      method: 'POST',
+      form: req.body
     };
-    if (config.useGoogleAuth) {
-      if (req.get('x-oauth-consumer-key')) {
-        requestOptions.oauth = {
-          consumer_key: req.get('x-oauth-consumer-key'),
-          consumer_secret: req.get('x-oauth-consumer-secret'),
-          token: req.get('x-oauth-token'),
-          token_secret: req.get('x-oauth-token-secret')
-        };
-      }
+    getSession(req, res, requestOptions, true);
+  });
+
+  router.post('/chkuser', function(req, res) {
+    var requestOptions = {};
+    if (req.get('x-oauth-consumer-key')) {
+      requestOptions.oauth = {
+        consumer_key: req.get('x-oauth-consumer-key'),
+        consumer_secret: req.get('x-oauth-consumer-secret'),
+        token: req.get('x-oauth-token'),
+        token_secret: req.get('x-oauth-token-secret')
+      };
     }
-    req.pipe(request.get(requestOptions, function (error, response, body) {
-      if (error) {
-        res.json({error: true, errorResult: error});
-      } else {
-        var userSession = JSON.parse(body);
-        if (userSession.userCtx.name === req.body.name) {
-          // User names match; we should respond with requested info
-          findUser(userSession.userCtx.name, function(err, user) {
-            if (err) {
-              res.json({error: true, errorResult: err});
-            } else {
-              res.json({
-                displayName: user.displayName,
-                prefix: user.userPrefix,
-                role: getPrimaryRole(user)
-              });
-            }
-          });
-        } else {
-          // User names don't match, throw error!
-          res.json({error: true, errorResult: 'You are not authorized'});
-        }
-      }
-    }));
+    getSession(req, res, requestOptions, false);
   });
 
   router.get('/logout', function(req, res) {

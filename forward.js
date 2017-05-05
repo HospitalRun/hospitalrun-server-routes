@@ -8,10 +8,10 @@ module.exports = function(host, config, useOauth) {
       url: forwardURL
     };
     var reqMethod = req.method.toLowerCase();
-    if (reqMethod == 'delete') {
+    if (reqMethod === 'delete') {
       reqMethod = 'del';
     }
-    if (config.useGoogleAuth && useOauth) {
+    if (useOauth) {
       if (req.get('x-oauth-consumer-key')) {
         requestOptions.oauth = {
           consumer_key: req.get('x-oauth-consumer-key'),
