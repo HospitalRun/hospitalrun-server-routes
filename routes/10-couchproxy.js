@@ -4,7 +4,8 @@ var CONFIGS_TO_LOAD = {
   'config_disable_offline_sync': 'disableOfflineSync',
   'config_use_google_auth': 'useGoogleAuth',
   'config_log_metrics': 'logNetworkMetrics',
-  'config_external_search': 'searchURL'
+  'config_external_search': 'searchURL',
+  'config_push_public_key': 'pushPublicKey'
 };
 
 module.exports = function(app, config) {
