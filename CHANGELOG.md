@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.0.0-beta](https://github.com/HospitalRun/hospitalrun-server-routes/tree/1.0.0-beta) (2017-05-05)
+
+[Full Changelog](https://github.com/HospitalRun/hospitalrun-server-routes/compare/0.9.11...1.0.0-beta)
+
+- Added web push for offline sync
+- Changed all logins to use OAuth (needed for offline sync)
+
 ## [0.9.11](https://github.com/HospitalRun/hospitalrun-server-routes/tree/0.9.11) (2017-03-23)
 
 [Full Changelog](https://github.com/HospitalRun/hospitalrun-server-routes/compare/0.9.10...0.9.11)
