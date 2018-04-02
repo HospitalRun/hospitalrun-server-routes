@@ -30,7 +30,7 @@
     "glob": "^7.0.0",
     "nano": "^6.2.0",
     "on-headers": "^1.0.1",
-    "passport": "^0.3.2",
+    "passport": "^0.4.0",
     "passport-google-oauth": "^1.0.0",
     "request": "^2.81.0",
     "serializer": "0.0.3",
