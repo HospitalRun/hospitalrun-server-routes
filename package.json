@@ -34,7 +34,7 @@
     "passport-google-oauth": "^1.0.0",
     "request": "^2.81.0",
     "serializer": "0.0.3",
-    "snyk": "^1.13.2"
+    "snyk": "^1.115.0"
   },
   "snyk": true
 }
